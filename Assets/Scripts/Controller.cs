@@ -51,6 +51,11 @@ public class Controller : MonoBehaviour
         //Matriz de adyacencia
         int[,] matriu = new int[Constants.NumTiles, Constants.NumTiles];
 
+
+        FillingEmptyMatriu(matriu);
+
+        Testing_fillingEmptyMatriu(matriu);
+
         //TODO: Inicializar matriz a 0's
 
         //TODO: Para cada posición, rellenar con 1's las casillas adyacentes (arriba, abajo, izquierda y derecha)
@@ -211,11 +216,42 @@ public class Controller : MonoBehaviour
 
 
     }
-    
-   
-    
 
-    
+
+    /********************************************************************************************
+    Internal Function
+    ********************************************************************************************/
+    private void FillingEmptyMatriu(int[,] matriu)
+    {
+        for (int i = 0; i < Constants.NumTiles; i++)
+        {
+            for (int j = 0; j < Constants.NumTiles; j++)
+            {
+                matriu[i, j] = 0;
+            }
+        }
+    }
+
+    /********************************************************************************************
+    Functional Tests
+    ********************************************************************************************/
+    private void Testing_fillingEmptyMatriu(int[,] matriu)
+    {
+        for (int i = 0; i < Constants.NumTiles; i++)
+        {
+            for (int j = 0; j < Constants.NumTiles; j++)
+            {
+                if (matriu[i, j] != 0)
+                {
+                    Debug.Log("TESTING:    Error al initzializar la matriu d'acjacencia a la posició" + i.ToString() + " " + j.ToString());
+                }
+                else
+                {
+                    Debug.Log("TESTING:    Creada la matriu d'acjacencia neta inicial correctament");
+                }
+            }
+        }
+    }
 
    
 
