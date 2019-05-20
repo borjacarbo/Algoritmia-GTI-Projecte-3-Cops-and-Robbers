@@ -149,7 +149,7 @@ public class Controller : MonoBehaviour
         - Actualizamos la variable currentTile del caco a la nueva casilla
         */
         int newPosition = FindNewRamdomPosition();
-        //Test_findNewRamdomPosition(newPosition);
+        // Test_findNewRamdomPosition(newPosition);
 
         robber.GetComponent<RobberMove>().MoveToTile(tiles[newPosition]);
         robber.GetComponent<RobberMove>().currentTile = tiles[newPosition].numTile;
@@ -220,7 +220,7 @@ public class Controller : MonoBehaviour
         }
         */
         FindSelectables(indexcurrentTile, nodes);
-        Test_findSelectables(indexcurrentTile, nodes);
+        // Test_findSelectables(indexcurrentTile, nodes);
     }
 
 
@@ -298,18 +298,20 @@ public class Controller : MonoBehaviour
     private int FindNewRamdomPosition()
     {
         List<int> alternatives = new List<int>();
+        int ForbidenTile_0 = cops[0].GetComponent<CopMove>().currentTile;
+        int ForbidenTile_1 = cops[1].GetComponent<CopMove>().currentTile;
 
         for (int i = 0; i < Constants.NumTiles; i++)
         {
-            int ForbidenTile_0 = cops[0].GetComponent<CopMove>().currentTile;
-            int ForbidenTile_1 = cops[1].GetComponent<CopMove>().currentTile;
-
-            Debug.Log("Forbiden tiles = " + " " + ForbidenTile_1.ToString() + " , " + ForbidenTile_0.ToString());
-
             if (tiles[i].selectable == true)
-                if ((i != ForbidenTile_0) && (i != ForbidenTile_1))
-                    alternatives.Add(i);
+            {
+                alternatives.Add(i);
+            }
         }
+
+        alternatives.Remove(ForbidenTile_0);
+        alternatives.Remove(ForbidenTile_1);
+
         int alternativa = Random.Range(0, alternatives.Count - 1);
         int[] alternativesArray = alternatives.ToArray();
         return alternativesArray[alternativa];
@@ -375,14 +377,46 @@ public class Controller : MonoBehaviour
             {
                     infoString = infoString + tile.numTile.ToString() + " ";
             }
-        Debug.Log(infoString);
+        // Debug.Log(infoString);
+        int ForbidenTile_0 = cops[0].GetComponent<CopMove>().currentTile;
+        int ForbidenTile_1 = cops[1].GetComponent<CopMove>().currentTile;
+        // Debug.Log("Forbiden tiles = " + " " + ForbidenTile_1.ToString() + " , " + ForbidenTile_0.ToString());
+
     }
 
     private void Test_findNewRamdomPosition(int position)
     {
+        Queue<Tile> nodes = new Queue<Tile>();
+
         int indexcurrentTile = robber.GetComponent<RobberMove>().currentTile;
 
+
+
+        foreach (int i in tiles[indexcurrentTile].adjacency)
+        {
+            nodes.Enqueue(tiles[i]);
+            foreach (int j in tiles[i].adjacency)
+            {
+                if (!(nodes.Contains(tiles[j])))
+                    if (!(tiles[j] == tiles[indexcurrentTile]))
+                        nodes.Enqueue(tiles[j]);
+            }
+        }
+
+
+        string infoString = "";
+        infoString = infoString + "From " + indexcurrentTile.ToString() + " can be selected: ";
+        foreach (Tile tile in nodes)
+        {
+            infoString = infoString + tile.numTile.ToString() + " ";
+        }
+        Debug.Log(infoString);
+
         Debug.Log("posición inicial del caco: " + indexcurrentTile.ToString());
+
+        int ForbidenTile_0 = cops[0].GetComponent<CopMove>().currentTile;
+        int ForbidenTile_1 = cops[1].GetComponent<CopMove>().currentTile;
+        Debug.Log("Forbiden tiles = " + " " + ForbidenTile_1.ToString() + " , " + ForbidenTile_0.ToString());
 
         Debug.Log ("Nueva posición del caco: " + tiles[position].numTile);
     }
