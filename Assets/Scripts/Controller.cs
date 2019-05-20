@@ -49,19 +49,19 @@ public class Controller : MonoBehaviour
     public void InitAdjacencyLists()
     {
         //Matriz de adyacencia
-        int[,] matriu = new int[Constants.NumTiles, Constants.NumTiles];
+        int[,] matriuAdjaciencia = new int[Constants.NumTiles, Constants.NumTiles];
 
+        //TODO-DONE: Inicializar matriz a 0's
+        FillingEmptyMatriu(matriuAdjaciencia);
+        // Test_fillingEmptyMatriu(matriuAdjaciencia);
 
-        FillingEmptyMatriu(matriu);
+        //TODO-DONE: Para cada posición, rellenar con 1's las casillas adyacentes (arriba, abajo, izquierda y derecha)
+        FillingAdjacentMatriu(matriuAdjaciencia);
+        // Test_fillingAdjacentMatriu(matriuAdjaciencia);
 
-        Testing_fillingEmptyMatriu(matriu);
-
-        //TODO: Inicializar matriz a 0's
-
-        //TODO: Para cada posición, rellenar con 1's las casillas adyacentes (arriba, abajo, izquierda y derecha)
-
-        //TODO: Rellenar la lista "adjacency" de cada casilla con los índices de sus casillas adyacentes
-
+        //TODO-DONE: Rellenar la lista "adjacency" de cada casilla con los índices de sus casillas adyacentes
+        FillingAdjacenyLists(tiles, matriuAdjaciencia);
+        // Test_fillingAdjacenyLists(tiles);
     }
 
     //Reseteamos cada casilla: color, padre, distancia y visitada
@@ -103,8 +103,7 @@ public class Controller : MonoBehaviour
                 {                  
                     cops[clickedCop].GetComponent<CopMove>().MoveToTile(tiles[clickedTile]);
                     cops[clickedCop].GetComponent<CopMove>().currentTile=tiles[clickedTile].numTile;
-                    tiles[clickedTile].current = true;   
-                    
+                    tiles[clickedTile].current = true;
                     state = Constants.TileSelected;
                 }                
                 break;
@@ -144,13 +143,18 @@ public class Controller : MonoBehaviour
         clickedTile = robber.GetComponent<RobberMove>().currentTile;
         tiles[clickedTile].current = true;
         FindSelectableTiles(false);
-
         /*TODO: Cambia el código de abajo para hacer lo siguiente
         - Elegimos una casilla aleatoria entre las seleccionables que puede ir el caco
         - Movemos al caco a esa casilla
         - Actualizamos la variable currentTile del caco a la nueva casilla
         */
-        robber.GetComponent<RobberMove>().MoveToTile(tiles[robber.GetComponent<RobberMove>().currentTile]);
+        int newPosition = FindNewRamdomPosition();
+        // Test_findNewRamdomPosition(newPosition);
+
+        robber.GetComponent<RobberMove>().MoveToTile(tiles[newPosition]);
+        robber.GetComponent<RobberMove>().currentTile = tiles[newPosition].numTile;
+        tiles[newPosition].current = true;
+
     }
 
     public void EndGame(bool end)
@@ -207,53 +211,213 @@ public class Controller : MonoBehaviour
         //Cola para el BFS
         Queue<Tile> nodes = new Queue<Tile>();
 
-        //TODO: Implementar BFS. Los nodos seleccionables los ponemos como selectable=true
+        //TODO-DONE: Implementar BFS. Los nodos seleccionables los ponemos como selectable=true
         //Tendrás que cambiar este código por el BFS
+        /*
         for(int i = 0; i < Constants.NumTiles; i++)
         {
             tiles[i].selectable = true;
         }
-
-
+        */
+        FindSelectables(indexcurrentTile, nodes);
+        // Test_findSelectables(indexcurrentTile, nodes);
     }
 
 
     /********************************************************************************************
     Internal Function
     ********************************************************************************************/
-    private void FillingEmptyMatriu(int[,] matriu)
+    private void FillingEmptyMatriu(int[,] matriuAdjaciencia)
     {
         for (int i = 0; i < Constants.NumTiles; i++)
         {
             for (int j = 0; j < Constants.NumTiles; j++)
             {
-                matriu[i, j] = 0;
+                matriuAdjaciencia[i, j] = 0;
             }
         }
     }
+
+    private void FillingAdjacentMatriu(int[,] matriuAdjaciencia)
+    {
+        for (int i = 0; i < Constants.NumTiles; i++)
+        {
+            for (int j = 0; j < Constants.NumTiles; j++)
+            {
+                if (i == j)
+                {
+                    matriuAdjaciencia[i, j] = 0;
+                }
+                else
+                {
+                    if ((((j == i - 1) || (j == i + 1)) || ((j == i - 8) || (j == i + 8))))
+                    {
+                        if ((j % 8 == 0) && (i == j - 1)) matriuAdjaciencia[i, j] = 0;
+                        else if (((j + 1) % 8 == 0) && (i == j + 1)) matriuAdjaciencia[i, j] = 0;
+                        else matriuAdjaciencia[i, j] = 1;
+                    }
+                    else
+                    {
+                        matriuAdjaciencia[i, j] = 0;
+                    }
+                } 
+            }
+        }
+    }
+
+    private void FillingAdjacenyLists(Tile[] tiles, int[,] matriuAdjaciencia)
+    {
+            for (int i = 0; i < Constants.NumTiles; i++)
+            {
+                for (int j = 0; j < Constants.NumTiles; j++)
+                {
+                    if (matriuAdjaciencia[i, j] == 1)
+                    {
+                        tiles[i].adjacency.Add(j);
+                    }
+                }
+            }
+    }
+
+    private void FindSelectables(int indexcurrentTile, Queue<Tile> nodes)
+    {
+        foreach (int i in tiles[indexcurrentTile].adjacency)
+        {
+            nodes.Enqueue(tiles[i]);
+            foreach (int j in tiles[i].adjacency)
+            {
+                if (!(nodes.Contains(tiles[j])))
+                    if (!(tiles[j] == tiles[indexcurrentTile]))
+                        nodes.Enqueue(tiles[j]);
+            }
+        }
+        foreach (Tile tile in nodes)
+            tile.selectable = true;
+    }
+
+    private int FindNewRamdomPosition()
+    {
+        List<int> alternatives = new List<int>();
+        int ForbidenTile_0 = cops[0].GetComponent<CopMove>().currentTile;
+        int ForbidenTile_1 = cops[1].GetComponent<CopMove>().currentTile;
+
+        for (int i = 0; i < Constants.NumTiles; i++)
+        {
+            if (tiles[i].selectable == true)
+            {
+                alternatives.Add(i);
+            }
+        }
+
+        alternatives.Remove(ForbidenTile_0);
+        alternatives.Remove(ForbidenTile_1);
+
+        int alternativa = Random.Range(0, alternatives.Count - 1);
+        int[] alternativesArray = alternatives.ToArray();
+        return alternativesArray[alternativa];
+    }
+
 
     /********************************************************************************************
     Functional Tests
     ********************************************************************************************/
-    private void Testing_fillingEmptyMatriu(int[,] matriu)
+    private void Test_fillingEmptyMatriu(int[,] matriuAdjaciencia)
     {
         for (int i = 0; i < Constants.NumTiles; i++)
         {
             for (int j = 0; j < Constants.NumTiles; j++)
             {
-                if (matriu[i, j] != 0)
+                if (matriuAdjaciencia[i, j] != 0)
                 {
-                    Debug.Log("TESTING:    Error al initzializar la matriu d'acjacencia a la posició" + i.ToString() + " " + j.ToString());
+                    Debug.Log("TESTING:    Error al initzializar la matriuAdjaciencia d'acjacencia a la posició" + i.ToString() + " " + j.ToString());
                 }
                 else
                 {
-                    Debug.Log("TESTING:    Creada la matriu d'acjacencia neta inicial correctament");
+                    Debug.Log ("TESTING:    Creada la matriuAdjaciencia d'acjacencia neta inicial correctament");
                 }
             }
         }
     }
 
-   
+    private void Test_fillingAdjacentMatriu(int[,] matriuAdjaciencia)
+    {
+        string adjacienciaString = "";
 
-       
+        for (int i = 0; i < Constants.NumTiles; i++)
+        {
+            adjacienciaString = "\nV" + i.ToString() + " adjacent a ";
+            for (int j = 0; j < Constants.NumTiles; j++)
+            {
+                if (matriuAdjaciencia[i, j] == 1)
+                {
+                    adjacienciaString = adjacienciaString + "V" + j.ToString() + " ";
+                }
+            }
+            Debug.Log(adjacienciaString);
+        }
+
+    }
+
+    private void Test_fillingAdjacenyLists(Tile[] tiles)
+    {
+        for (int i = 0; i < Constants.NumTiles; i++)
+        {
+            string adjacienciaString = "V" + i.ToString() + ": ";
+            foreach (int j in tiles[i].adjacency)
+                adjacienciaString = adjacienciaString + "V" + j.ToString() + " ";
+            Debug.Log(adjacienciaString);
+        }
+    }
+
+    private void Test_findSelectables(int indexcurrentTile, Queue<Tile> nodes)
+    {
+        string infoString = "";
+            infoString = infoString + "From " + indexcurrentTile.ToString() + " can be selected: ";
+            foreach (Tile tile in nodes)
+            {
+                    infoString = infoString + tile.numTile.ToString() + " ";
+            }
+        // Debug.Log(infoString);
+        int ForbidenTile_0 = cops[0].GetComponent<CopMove>().currentTile;
+        int ForbidenTile_1 = cops[1].GetComponent<CopMove>().currentTile;
+        // Debug.Log("Forbiden tiles = " + " " + ForbidenTile_1.ToString() + " , " + ForbidenTile_0.ToString());
+
+    }
+
+    private void Test_findNewRamdomPosition(int position)
+    {
+        Queue<Tile> nodes = new Queue<Tile>();
+
+        int indexcurrentTile = robber.GetComponent<RobberMove>().currentTile;
+
+
+
+        foreach (int i in tiles[indexcurrentTile].adjacency)
+        {
+            nodes.Enqueue(tiles[i]);
+            foreach (int j in tiles[i].adjacency)
+            {
+                if (!(nodes.Contains(tiles[j])))
+                    if (!(tiles[j] == tiles[indexcurrentTile]))
+                        nodes.Enqueue(tiles[j]);
+            }
+        }
+
+
+        string infoString = "";
+        infoString = infoString + "From " + indexcurrentTile.ToString() + " can be selected: ";
+        foreach (Tile tile in nodes)
+        {
+            infoString = infoString + tile.numTile.ToString() + " ";
+        }
+        Debug.Log(infoString);
+
+        Debug.Log("posición inicial del caco: " + indexcurrentTile.ToString());
+
+        int ForbidenTile_0 = cops[0].GetComponent<CopMove>().currentTile;
+        int ForbidenTile_1 = cops[1].GetComponent<CopMove>().currentTile;
+        Debug.Log("Forbiden tiles = " + " " + ForbidenTile_1.ToString() + " , " + ForbidenTile_0.ToString());
+
+        Debug.Log ("Nueva posición del caco: " + tiles[position].numTile);
+    }
 }
